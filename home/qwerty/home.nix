@@ -5,6 +5,7 @@
     ./alacritty.nix
     ./niri.nix
     ./nixvim.nix
+    ./ssh.nix
   ];
 
   home.username = username;
@@ -79,9 +80,9 @@
   };
 
   programs.git = {
-    enable = true;
-    # userName = "Your Name";
-    # userEmail = "you@example.com";
+	enable = true;
+	userName = "Volodymyr Tymchuk";
+	userEmail = "volodymyr.tymchuk@outlook.com";
   };
 
   programs.home-manager.enable = true;
