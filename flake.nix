@@ -5,15 +5,20 @@
     # unstable tracks new packages (niri, quickshell) faster than a stable release branch
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
+    disko = {
+      url = "github:nix-community/disko";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     home-manager = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    disko = {
-      url = "github:nix-community/disko";
-      inputs.nixpkgs.follows = "nixpkgs";
+    nix-flatpak = {
+	url = "github:gmodena/nix-flatpak";
     };
+
 
     # optional: structured, Nix-native neovim config instead of a plain init.lua
     nixvim = {
@@ -28,7 +33,16 @@
     };
   };
 
-  outputs = { self, nixpkgs, home-manager, disko, nixvim, quickshell, ... }@inputs:
+  outputs = { 
+	self, 
+	nixpkgs, 
+	disko,
+	home-manager, 
+	nix-flatpak,
+	nixvim, 
+	quickshell, 
+	... 
+  }@inputs:
     let
       system = "x86_64-linux";
 
@@ -54,8 +68,13 @@
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs username; };
             home-manager.users.${username} = import ./home/${username}/home.nix;
+	    home-manager.sharedModules = [
+              nix-flatpak.homeManagerModules.nix-flatpak
+            ];
           }
         ];
       };
     };
 }
+
+

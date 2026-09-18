@@ -2,6 +2,8 @@
 
 {
   imports = [
+    ./alacritty.nix
+    ./niri.nix
     ./nixvim.nix
   ];
 
@@ -43,6 +45,17 @@
     # quickshell has no home-manager module yet, so just install the package
     inputs.quickshell.packages.${pkgs.system}.default
   ];
+
+  services.flatpak = {
+    packages = [
+      "app.zen_browser.zen"
+      "org.telegram.desktop"
+      "md.obsidian.Obsidian"
+      "com.spotify.Client"
+      "com.visualstudio.code"
+    ];
+  };
+
 
   ##########################################################################
   # Niri: launched, not yet configured here. On first run niri writes a
