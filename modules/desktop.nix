@@ -64,12 +64,6 @@
     powerManagement.enable = false; # flip to true on a laptop if suspend misbehaves
   };
 
-  ##########################################################################
-  # Niri (Wayland compositor), no greeter -- autologin on tty1 launches it
-  ##########################################################################
-  # This is the upstream nixpkgs module. It also wires up XDG portals
-  # (xdg-desktop-portal-gnome for the picker + gtk for file choosers) so
-  # screen sharing / screenshots work out of the box.
   programs.niri.enable = true;
 
   services.getty.autologinUser = username;

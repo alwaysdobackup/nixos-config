@@ -15,10 +15,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    nix-flatpak = {
-	url = "github:gmodena/nix-flatpak";
+    niri = {
+        url = "github:sodiboo/niri-flake";
     };
 
+    nix-flatpak = {
+	    url = "github:gmodena/nix-flatpak";
+    };
 
     # optional: structured, Nix-native neovim config instead of a plain init.lua
     nixvim = {
@@ -38,6 +41,7 @@
 	nixpkgs, 
 	disko,
 	home-manager, 
+    niri,
 	nix-flatpak,
 	nixvim, 
 	quickshell, 
@@ -67,8 +71,15 @@
             home-manager.useGlobalPkgs = true;
             home-manager.useUserPackages = true;
             home-manager.extraSpecialArgs = { inherit inputs username; };
-            home-manager.users.${username} = import ./home/${username}/home.nix;
-	    home-manager.sharedModules = [
+
+            home-manager.users.${username} = {
+                imports = [
+                    niri.homeModules.config
+                    ./home/${username}/home.nix
+                ];
+            };
+
+    	    home-manager.sharedModules = [
               nix-flatpak.homeManagerModules.nix-flatpak
             ];
           }

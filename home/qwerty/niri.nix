@@ -2,16 +2,56 @@
 
 {
   programs.niri = {
-    enable = true;
+    package = pkgs.niri;
 
     settings = {
+      # --------------------------------------------------------------------
+      # General
+      # --------------------------------------------------------------------
+      
+      prefer-no-csd = true;
+
+      screenshot-path =
+        "~/Pictures/Screenshots/%Y-%m-%d_%H-%M-%S.png";
+
+      hotkey-overlay = {
+        skip-at-startup = true;
+      };
+
+
+      # --------------------------------------------------------------------
+      # Environment
+      # --------------------------------------------------------------------
+
+      environment = {
+        # Wayland-native applications.
+        QT_QPA_PLATFORM = "wayland";
+
+        # GTK / Electron / Chromium applications.
+        NIXOS_OZONE_WL = "1";
+
+        # Firefox and other applications.
+        MOZ_ENABLE_WAYLAND = "1";
+
+        # Java applications which support Wayland.
+        _JAVA_AWT_WM_NONREPARENTING = "1";
+
+        # Prevent applications from forcing X11 display usage.
+        DISPLAY = null;
+      };
+
       # --------------------------------------------------------------------
       # Monitor
       # --------------------------------------------------------------------
       outputs."HDMI-A-1" = {
-        mode = "3840x2160@60.000";
-        scale = 1.0;
+          mode = {
+              width = 3840;
+              height = 2160;
+              refresh = 60.0;
+          };
+          scale = 1.0;
       };
+
 
       # --------------------------------------------------------------------
       # Input
@@ -22,13 +62,70 @@
           options = "grp:win_space_toggle";
         };
 
-        # Disable touchpad completely.
-        touchpad.off = true;
 
         # Increase mouse wheel scrolling speed.
         # 2.0 = approximately twice the normal scroll distance.
         mouse.scroll-factor = 2.0;
       };
+
+      
+      # --------------------------------------------------------------------
+      # Cursor
+      # --------------------------------------------------------------------
+      cursor = {
+        hide-when-typing = true;
+        hide-after-inactive-ms = 2000;
+
+        xcursor-size = 24;
+      };
+
+
+      # --------------------------------------------------------------------
+      # Layout
+      # --------------------------------------------------------------------
+        
+      layout = {
+        gaps = 12;
+
+        # DevOps work usually benefits from keeping the focused
+        # terminal/editor near the center of the screen.
+        center-focused-column = "never";
+
+        always-center-single-column = true;
+
+        default-column-width = {
+          proportion = 0.50;
+        };
+
+        preset-column-widths = [
+          { proportion = 0.33333; }
+          { proportion = 0.50; }
+          { proportion = 0.66667; }
+        ];
+
+        focus-ring = {
+          width = 2;
+          active-color = "#7aa2f7";
+          inactive-color = "#414868";
+          urgent-color = "#f7768e";
+        };
+
+        border = {
+          off = true;
+        };
+
+        shadow = {
+          on = true;
+          softness = 30;
+          spread = 5;
+          offset = {
+            x = 0;
+            y = 5;
+          };
+          color = "#00000055";
+        };
+      };
+
 
       # --------------------------------------------------------------------
       # Workspaces
@@ -92,6 +189,109 @@
         "Mod+Shift+7".action.move-window-to-workspace = "scratch";
         "Mod+Shift+8".action.move-window-to-workspace = "misc";
       };
+
+      # --------------------------------------------------------------------
+      # Window rules
+      # --------------------------------------------------------------------
+
+      window-rules = [
+        # ----------------------------------------------------------
+        # Terminal
+        # ----------------------------------------------------------
+
+        {
+          matches = [
+            { app-id = "^Alacritty$"; }
+            { app-id = "^org\.wezfurlong\.wezterm$"; }
+          ];
+
+          default-column-width = {
+            proportion = 0.50;
+          };
+        }
+
+        # ----------------------------------------------------------
+        # Browser
+        # ----------------------------------------------------------
+
+        {
+          matches = [
+            { app-id = "^zen$"; }
+            { app-id = "^firefox$"; }
+            { app-id = "^chromium$"; }
+            { app-id = "^google-chrome$"; }
+          ];
+
+          default-column-width = {
+            proportion = 0.66667;
+          };
+        }
+
+        # ----------------------------------------------------------
+        # Floating dialogs
+        # ----------------------------------------------------------
+
+        {
+          matches = [
+            { title = "^(Open|Save|Select).*"; }
+          ];
+
+          open-floating = true;
+        }
+
+        # ----------------------------------------------------------
+        # Authentication dialogs
+        # ----------------------------------------------------------
+
+        {
+          matches = [
+            { app-id = ".*polkit.*"; }
+          ];
+
+          open-floating = true;
+        }
+
+        # ----------------------------------------------------------
+        # Picture-in-picture
+        # ----------------------------------------------------------
+
+        {
+          matches = [
+            {
+              title = ".*Picture-in-Picture.*";
+            }
+          ];
+
+          open-floating = true;
+        }
+
+        # ----------------------------------------------------------
+        # Extension: Bitwarden 
+        # ----------------------------------------------------------
+
+        {
+            matches = [
+              {
+                app-id = "^zen$";
+                title = "^Extension:.*Bitwarden.*Zen Browser$";
+              }
+            ];
+
+            open-floating = true;
+
+            default-column-width = {
+              fixed = 420;
+            };
+
+            default-window-height = {
+              fixed = 700;
+            };
+
+            shadow = {
+              on = true;
+            };
+        }
+      ];
     };
   };
 }

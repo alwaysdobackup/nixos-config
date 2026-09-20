@@ -9,6 +9,9 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
+  # Use the latest kernel available from this nixpkgs revision.
+  boot.kernelPackages = pkgs.linuxPackages_latest;
+
   ##########################################################################
   # Identity
   ##########################################################################
