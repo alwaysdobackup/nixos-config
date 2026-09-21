@@ -12,12 +12,12 @@
 
       # Example:
       #
-      # "github.com" = {
-      #   hostname = "github.com";
-      #   user = "git";
-      #   identityFile = "~/.ssh/id_ed25519";
-      #   identitiesOnly = true;
-      # };
+      "github.com" = {
+        hostname = "github.com";
+        user = "git";
+        identityFile = "~/.ssh/github.prv";
+        identitiesOnly = true;
+      };
     };
   };
 }
