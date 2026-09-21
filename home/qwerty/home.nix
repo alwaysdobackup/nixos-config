@@ -45,6 +45,14 @@
     grim
     wl-clipboard
 
+    # Tools
+    docker-compose
+    docker-buildx
+    minikube
+    kubectl
+    terraform
+    awscli2
+
     # Misc
     # quickshell has no home-manager module yet, so just install the package
     inputs.quickshell.packages.${pkgs.system}.default

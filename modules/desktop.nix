@@ -58,7 +58,7 @@
   hardware.nvidia = {
     modesetting.enable = true;   # required for Wayland compositors like niri
     open = true;                 # nvidia-open: only Turing (RTX 20xx) and newer
-    package = config.boot.kernelPackages.nvidiaPackages.stable;
+    package = config.boot.kernelPackages.nvidiaPackages.latest;
     nvidiaSettings = true;
 
     powerManagement.enable = false; # flip to true on a laptop if suspend misbehaves

@@ -17,6 +17,12 @@
   ##########################################################################
   networking.hostName = "workstation"; # keep in sync with `hostname` in flake.nix
 
+  # Docker
+  virtualisation.docker = {
+    enable = true;
+    autoPrune.enable = true;   # periodically cleans unused images/containers
+  };
+
   services.openssh = {
     enable = true;
     openFirewall = false;   # don't open port 22; we only need the host key
@@ -30,7 +36,7 @@
 
   users.users.${username} = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "video" "audio" ];
+    extraGroups = [ "wheel" "video" "audio" "docker" ];
     shell = pkgs.bash;
   };
 
