@@ -48,7 +48,7 @@
     # Tools
     docker-compose
     docker-buildx
-    minikube
+    (lib.lowPrio minikube) 
     kubectl
     terraform
     awscli2

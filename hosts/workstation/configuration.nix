@@ -1,4 +1,10 @@
-{ config, pkgs, lib, username, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  username,
+  ...
+}:
 
 {
   imports = [ ../../modules/desktop.nix ];
@@ -10,7 +16,7 @@
   boot.loader.efi.canTouchEfiVariables = true;
 
   # Use the latest kernel available from this nixpkgs revision.
-  boot.kernelPackages = pkgs.linuxPackages_latest;
+  boot.kernelPackages = pkgs.linuxPackages;
 
   ##########################################################################
   # Identity
@@ -20,23 +26,27 @@
   # Docker
   virtualisation.docker = {
     enable = true;
-    autoPrune.enable = true;   # periodically cleans unused images/containers
+    autoPrune.enable = true; # periodically cleans unused images/containers
   };
 
   services.openssh = {
     enable = true;
-    openFirewall = false;   # don't open port 22; we only need the host key
+    openFirewall = false; # don't open port 22; we only need the host key
     settings = {
       PasswordAuthentication = false;
       KbdInteractiveAuthentication = false;
       PermitRootLogin = "no";
     };
-  };  
-
+  };
 
   users.users.${username} = {
     isNormalUser = true;
-    extraGroups = [ "wheel" "video" "audio" "docker" ];
+    extraGroups = [
+      "wheel"
+      "video"
+      "audio"
+      "docker"
+    ];
     shell = pkgs.bash;
   };
 
@@ -49,5 +59,5 @@
   # Set this to whatever release is current when you install (check with
   # `nixos-version` on the installer), then never change it -- see the
   # NixOS manual's notes on system.stateVersion for why.
-  system.stateVersion = "26.05";
+  system.stateVersion = "26.11";
 }
