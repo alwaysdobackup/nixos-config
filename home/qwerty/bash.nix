@@ -40,6 +40,10 @@
     };
 
     initExtra = ''
+      if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
+        exec niri-session
+      fi
+
       # ============================================================
       # DevOps Bash Prompt (no forks, no external commands)
       #
