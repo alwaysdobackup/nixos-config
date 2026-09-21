@@ -17,6 +17,17 @@
   ##########################################################################
   networking.hostName = "workstation"; # keep in sync with `hostname` in flake.nix
 
+  services.openssh = {
+    enable = true;
+    openFirewall = false;   # don't open port 22; we only need the host key
+    settings = {
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      PermitRootLogin = "no";
+    };
+  };  
+
+
   users.users.${username} = {
     isNormalUser = true;
     extraGroups = [ "wheel" "video" "audio" ];

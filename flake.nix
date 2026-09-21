@@ -9,6 +9,11 @@
       url = "github:nix-community/disko";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    
+    sops-nix = {
+        url = "github:Mic92/sops-nix";
+        inputs.nixpkgs.follows = "nixpkgs";
+    };
 
     home-manager = {
       url = "github:nix-community/home-manager";
@@ -40,6 +45,7 @@
 	self, 
 	nixpkgs, 
 	disko,
+    sops-nix,
 	home-manager, 
     niri,
 	nix-flatpak,
@@ -62,6 +68,8 @@
         modules = [
           disko.nixosModules.disko
           ./hosts/${hostname}/disko.nix
+
+          sops-nix.nixosModules.sops
 
           ./hosts/${hostname}/configuration.nix
           ./hosts/${hostname}/hardware-configuration.nix
