@@ -72,6 +72,7 @@
           sops-nix.nixosModules.sops
 
           ./hosts/${hostname}/configuration.nix
+          ./hosts/${hostname}/openvpn-work.nix
           ./hosts/${hostname}/hardware-configuration.nix
 
           home-manager.nixosModules.home-manager
