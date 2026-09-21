@@ -41,8 +41,17 @@
 
     initExtra = ''
       # ============================================================
-      # DevOps Bash Prompt
+      # DevOps Bash Prompt (no forks, no external commands)
+      #
+      # Every segment is built with bash builtins only. Segment
+      # functions append to $__prompt_env instead of printing, so no
+      # $(...) subshell is needed either.
+      #
+      # Optional: export PROMPT_GIT_DIRTY=1 to show a "*" for a dirty
+      # git tree. That is the only thing here that runs `git`.
       # ============================================================
+
+      : "''${PROMPT_GIT_DIRTY:=0}"
 
       # Colors
       __prompt_reset='\[\e[0m\]'
@@ -57,30 +66,60 @@
       __prompt_white='\[\e[97m\]'
       __prompt_bold='\[\e[1m\]'
 
+      # Icons (Nerd Font)
+      __icon_git=$'\xf3\xb0\x8a\xa2'   # U+F02A2
+      __icon_nix=$'\xf3\xb1\x84\x85'   # U+F1105
+      __icon_python=$'\xee\x9c\xbc'   # U+E73C
+      __icon_k8s=$'\xf3\xb1\x83\xbe'   # U+F10FE
+      __icon_tf=$'\xf3\xb1\x81\xa2'   # U+F1062
+      __icon_aws=$'\xf3\xb0\xb8\x8f'   # U+F0E0F
+      __icon_ssh=$'\xf3\xb0\xa3\x80'   # U+F08C0
+      __icon_docker=$'\xf3\xb0\xa1\xa8'   # U+F0868
+
 
       # ------------------------------------------------------------
-      # Git
+      # Git: read .git/HEAD directly instead of running git
       # ------------------------------------------------------------
 
       __prompt_git() {
-        command -v git >/dev/null 2>&1 || return
+        local dir="$PWD" gitdir="" head branch
 
-        local branch
-        branch="$(git symbolic-ref --quiet --short HEAD 2>/dev/null)" ||
-          branch="$(git rev-parse --short HEAD 2>/dev/null)" ||
-          return
+        # Walk up looking for .git (directory, or file for worktrees/submodules)
+        while :; do
+          if [[ -d "$dir/.git" ]]; then
+            gitdir="$dir/.git"
+            break
+          elif [[ -f "$dir/.git" ]]; then
+            IFS= read -r head < "$dir/.git" || return
+            gitdir="''${head#gitdir: }"
+            [[ "$gitdir" == /* ]] || gitdir="$dir/$gitdir"
+            break
+          fi
+          [[ "$dir" == / ]] && return
+          dir="''${dir%/*}"
+          dir="''${dir:-/}"
+        done
 
-        if [[ -n "$(git status --porcelain 2>/dev/null)" ]]; then
-          printf '%s󰊢 %s*%s' \
-            "$__prompt_yellow" \
-            "$branch" \
-            "$__prompt_reset"
+        IFS= read -r head < "$gitdir/HEAD" || return
+
+        if [[ "$head" == "ref: refs/heads/"* ]]; then
+          branch="''${head#ref: refs/heads/}"
         else
-          printf '%s󰊢 %s%s' \
-            "$__prompt_green" \
-            "$branch" \
-            "$__prompt_reset"
+          branch="''${head:0:7}"   # detached HEAD: short hash
         fi
+
+        # Never let a branch name inject $(...) or backticks into PS1
+        branch="''${branch//[\\\$\`]/}"
+
+        local color="$__prompt_green" mark=""
+
+        if [[ "$PROMPT_GIT_DIRTY" == 1 ]] &&
+           [[ -n "$(git status --porcelain 2>/dev/null)" ]]; then
+          color="$__prompt_yellow"
+          mark="*"
+        fi
+
+        __prompt_env+=" ''${color}''${__icon_git} ''${branch}''${mark}''${__prompt_reset}"
       }
 
 
@@ -91,12 +130,7 @@
       __prompt_nix() {
         [[ -n "$IN_NIX_SHELL" ]] || return
 
-        local name="''${name:-shell}"
-
-        printf '%s󱄅 nix:%s%s' \
-          "$__prompt_cyan" \
-          "$name" \
-          "$__prompt_reset"
+        __prompt_env+=" ''${__prompt_cyan}''${__icon_nix} nix:''${name:-shell}''${__prompt_reset}"
       }
 
 
@@ -107,59 +141,91 @@
       __prompt_python() {
         [[ -n "$VIRTUAL_ENV" ]] || return
 
-        printf '%s %s%s' \
-          "$__prompt_blue" \
-          "$(basename "$VIRTUAL_ENV")" \
-          "$__prompt_reset"
+        __prompt_env+=" ''${__prompt_blue}''${__icon_python} ''${VIRTUAL_ENV##*/}''${__prompt_reset}"
       }
 
 
       # ------------------------------------------------------------
-      # Kubernetes
-      # ------------------------------------------------------------
-
-      __prompt_kubernetes() {
-        command -v kubectl >/dev/null 2>&1 || return
-
-        [[ -f "$HOME/.kube/config" || -n "$KUBECONFIG" ]] || return
-
-        local context namespace
-
-        context="$(kubectl config current-context 2>/dev/null)" ||
-          return
-
-        namespace="$(
-          kubectl config view \
-            --minify \
-            --output 'jsonpath={..namespace}' \
-            2>/dev/null
-        )"
-
-        namespace="''${namespace:-default}"
-
-        printf '%s󱃾 %s/%s%s' \
-          "$__prompt_magenta" \
-          "$context" \
-          "$namespace" \
-          "$__prompt_reset"
-      }
-
-
-      # ------------------------------------------------------------
-      # Terraform
+      # Terraform: read .terraform/environment instead of running terraform
       # ------------------------------------------------------------
 
       __prompt_terraform() {
-        [[ -d ".terraform" ]] || return
-        command -v terraform >/dev/null 2>&1 || return
+        [[ -d .terraform ]] || return
 
-        local workspace
-        workspace="$(terraform workspace show 2>/dev/null)" || return
+        local ws="$TF_WORKSPACE"
 
-        printf '%s󱁢 tf:%s%s' \
-          "$__prompt_bright_cyan" \
-          "$workspace" \
-          "$__prompt_reset"
+        if [[ -z "$ws" && -r .terraform/environment ]]; then
+          IFS= read -r ws < .terraform/environment
+        fi
+
+        ws="''${ws:-default}"
+        ws="''${ws//[\\\$\`]/}"
+
+        __prompt_env+=" ''${__prompt_bright_cyan}''${__icon_tf} tf:''${ws}''${__prompt_reset}"
+      }
+
+
+      # ------------------------------------------------------------
+      # Kubernetes: parse the kubeconfig file instead of running kubectl
+      # (assumes kubectl's own YAML layout; uses the first KUBECONFIG file)
+      # ------------------------------------------------------------
+
+      __prompt_kubernetes() {
+        local cfg="''${KUBECONFIG%%:*}"
+        cfg="''${cfg:-$HOME/.kube/config}"
+        [[ -r "$cfg" ]] || return
+
+        local line current="" pending="" in_contexts=0 q="'" key val
+        local -A ns_of=()
+
+        while IFS= read -r line; do
+          case "$line" in
+            "contexts:"*)         in_contexts=1 ;;
+            "current-context: "*) current="''${line#current-context: }"; in_contexts=0 ;;
+            [a-zA-Z]*:*)          in_contexts=0 ;;
+            *)
+              (( in_contexts )) || continue
+              case "$line" in
+                "- context:"*)
+                  pending=""
+                  ;;
+                "    namespace: "*)
+                  pending="''${line#    namespace: }"
+                  pending="''${pending//\"/}"
+                  pending="''${pending//$q/}"
+                  ;;
+                "  name: "*)
+                  key="''${line#  name: }"
+                  key="''${key//\"/}"
+                  key="''${key//$q/}"
+                  ns_of["$key"]="$pending"
+                  pending=""
+                  ;;
+              esac
+              ;;
+          esac
+        done < "$cfg"
+
+        current="''${current//\"/}"
+        current="''${current//$q/}"
+        [[ -n "$current" ]] || return
+
+        local ns="''${ns_of[$current]:-default}"
+        current="''${current//[\\\$\`]/}"
+        ns="''${ns//[\\\$\`]/}"
+
+        __prompt_env+=" ''${__prompt_magenta}''${__icon_k8s} ''${current}/''${ns}''${__prompt_reset}"
+      }
+
+
+      # ------------------------------------------------------------
+      # Docker
+      # ------------------------------------------------------------
+
+      __prompt_docker() {
+        [[ -n "$DOCKER_CONTEXT" && "$DOCKER_CONTEXT" != default ]] || return
+
+        __prompt_env+=" ''${__prompt_cyan}''${__icon_docker} docker:''${DOCKER_CONTEXT//[\\\$\`]/}''${__prompt_reset}"
       }
 
 
@@ -170,10 +236,7 @@
       __prompt_aws() {
         [[ -n "$AWS_PROFILE" ]] || return
 
-        printf '%s󰸏 aws:%s%s' \
-          "$__prompt_yellow" \
-          "$AWS_PROFILE" \
-          "$__prompt_reset"
+        __prompt_env+=" ''${__prompt_yellow}''${__icon_aws} aws:''${AWS_PROFILE//[\\\$\`]/}''${__prompt_reset}"
       }
 
 
@@ -184,60 +247,7 @@
       __prompt_ssh() {
         [[ -n "$SSH_CONNECTION" ]] || return
 
-        printf '%s󰣀 SSH%s' \
-          "$__prompt_red" \
-          "$__prompt_reset"
-      }
-
-
-      # ------------------------------------------------------------
-      # Docker
-      # ------------------------------------------------------------
-
-      __prompt_docker() {
-        [[ -n "$DOCKER_CONTEXT" ]] || return
-        [[ "$DOCKER_CONTEXT" == "default" ]] && return
-
-        printf '%s󰡨 docker:%s%s' \
-          "$__prompt_cyan" \
-          "$DOCKER_CONTEXT" \
-          "$__prompt_reset"
-      }
-
-
-      # ------------------------------------------------------------
-      # Compose environment information
-      # ------------------------------------------------------------
-
-      __prompt_environment() {
-        local item
-        local output=""
-
-        item="$(__prompt_git)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        item="$(__prompt_nix)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        item="$(__prompt_python)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        item="$(__prompt_terraform)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        item="$(__prompt_kubernetes)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        item="$(__prompt_docker)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        item="$(__prompt_aws)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        item="$(__prompt_ssh)"
-        [[ -n "$item" ]] && output+=" $item"
-
-        printf '%s' "$output"
+        __prompt_env+=" ''${__prompt_red}''${__icon_ssh} SSH''${__prompt_reset}"
       }
 
 
@@ -249,21 +259,27 @@
         local exit_code=$?
 
         local user_color="$__prompt_green"
+        [[ "$EUID" -eq 0 ]] && user_color="$__prompt_red"
 
-        if [[ "$EUID" -eq 0 ]]; then
-          user_color="$__prompt_red"
-        fi
-
-        local status
-
+        local last_status
         if (( exit_code == 0 )); then
-          status="''${__prompt_green}✔''${__prompt_reset}"
+          last_status="''${__prompt_green}✔''${__prompt_reset}"
         else
-          status="''${__prompt_red}✘ $exit_code''${__prompt_reset}"
+          last_status="''${__prompt_red}✘ $exit_code''${__prompt_reset}"
         fi
 
-        local environment
-        environment="$(__prompt_environment)"
+        __prompt_env=""
+        __prompt_git
+        __prompt_nix
+        __prompt_python
+        __prompt_terraform
+        __prompt_kubernetes
+        __prompt_docker
+        __prompt_aws
+        __prompt_ssh
+
+        # \$ is expanded by bash at display time: "$" for users, "#" for root
+        local symbol='\$'
 
         PS1="''${__prompt_gray}┌─''${__prompt_reset}"
         PS1+="''${user_color}\u''${__prompt_reset}"
@@ -271,17 +287,17 @@
         PS1+="''${__prompt_bright_cyan}\h''${__prompt_reset}"
         PS1+=" ''${__prompt_gray}in''${__prompt_reset}"
         PS1+=" ''${__prompt_blue}\w''${__prompt_reset}"
-        PS1+="''${environment}"
+        PS1+="''${__prompt_env}"
         PS1+=$'\n'
         PS1+="''${__prompt_gray}└─''${__prompt_reset}"
-        PS1+="''${status}"
-        PS1+=" ''${__prompt_bold}''${__prompt_white}\\\$''${__prompt_reset} "
+        PS1+="''${last_status}"
+        PS1+=" ''${__prompt_bold}''${__prompt_white}''${symbol}''${__prompt_reset} "
       }
 
 
-      # Preserve any existing PROMPT_COMMAND.
-      PROMPT_COMMAND="__prompt_command''${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+      # Preserve any existing PROMPT_COMMAND, but don't add ourselves twice.
+      [[ "$PROMPT_COMMAND" == *__prompt_command* ]] ||
+        PROMPT_COMMAND="__prompt_command''${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
     '';
   };
 }
-
