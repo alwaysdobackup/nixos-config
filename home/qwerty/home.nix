@@ -3,9 +3,11 @@
 {
   imports = [
     ./alacritty.nix
+    ./bash.nix
     ./niri.nix
     ./nixvim.nix
     ./ssh.nix
+    ./zen.nix
   ];
 
   home.username = username;
@@ -49,7 +51,6 @@
 
   services.flatpak = {
     packages = [
-      "app.zen_browser.zen"
       "org.telegram.desktop"
       "md.obsidian.Obsidian"
       "com.spotify.Client"
@@ -57,27 +58,6 @@
     ];
   };
 
-
-  ##########################################################################
-  # Niri: launched, not yet configured here. On first run niri writes a
-  # commented, documented default config to ~/.config/niri/config.kdl --
-  # edit that by hand for now. Once you're happy with it, you can migrate it
-  # into home-manager's `programs.niri.settings` (from home-manager's niri
-  # module) for reproducibility.
-  ##########################################################################
-
-  ##########################################################################
-  # Shell: since there's no greeter yet, autologin (configuration.nix) drops
-  # you into a shell on tty1, and this launches niri from there.
-  ##########################################################################
-  programs.bash = {
-    enable = true;
-    initExtra = ''
-      if [ -z "$WAYLAND_DISPLAY" ] && [ "$(tty)" = "/dev/tty1" ]; then
-        exec niri-session
-      fi
-    '';
-  };
 
   programs.git = {
 	enable = true;

@@ -75,8 +75,6 @@
       cursor = {
         hide-when-typing = true;
         hide-after-inactive-ms = 2000;
-
-        xcursor-size = 24;
       };
 
 
@@ -103,27 +101,7 @@
           { proportion = 0.66667; }
         ];
 
-        focus-ring = {
-          width = 2;
-          active-color = "#7aa2f7";
-          inactive-color = "#414868";
-          urgent-color = "#f7768e";
-        };
 
-        border = {
-          off = true;
-        };
-
-        shadow = {
-          on = true;
-          softness = 30;
-          spread = 5;
-          offset = {
-            x = 0;
-            y = 5;
-          };
-          color = "#00000055";
-        };
       };
 
 
@@ -285,10 +263,6 @@
 
             default-window-height = {
               fixed = 700;
-            };
-
-            shadow = {
-              on = true;
             };
         }
       ];
