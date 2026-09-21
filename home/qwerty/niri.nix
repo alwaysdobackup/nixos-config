@@ -109,14 +109,14 @@
       # Workspaces
       # --------------------------------------------------------------------
       workspaces = {
-        personal = {};
-        work = {};
-        devops = {};
-        notes = {};
-        messenger = {};
-        media = {};
-        scratch = {};
-        misc = {};
+        "01-personal"   = { name = "personal"; };
+        "02-work"       = { name = "work"; };
+        "03-devops"     = { name = "devops"; };
+        "04-notes"      = { name = "notes"; };
+        "05-messenger"  = { name = "messenger"; };
+        "06-media"      = { name = "media"; };
+        "07-scratch"    = { name = "scratch"; };
+        "08-misc"       = { name = "misc"; };
       };
 
       # --------------------------------------------------------------------
@@ -129,12 +129,13 @@
         # Terminal
         "Mod+Return".action.spawn = "alacritty";
 
-        # Keyboard layout: US <-> UA
-        #
-        # The actual switching is handled by the XKB option above.
-        # Super+Space is therefore the layout switch shortcut.
-        #
-        # Niri itself doesn't need a corresponding action here.
+        # Overview
+        "Mod+O".action.toggle-overview = [];
+
+        # Window management
+        "Mod+M".action.maximize-column = [];
+        "Mod+R".action.switch-preset-column-width = [];
+        "Mod+F".action.fullscreen-window = [];
 
         # Close focused window
         "Mod+Shift+Q".action.close-window = {};
@@ -146,6 +147,10 @@
         # Focus windows
         "Mod+Up".action.focus-window-up = {};
         "Mod+Down".action.focus-window-down = {};
+
+        # Switch workspaces
+        "Mod+Page_Down".action.focus-workspace-down = [];
+        "Mod+Page_Up".action.focus-workspace-up = [];
 
         # Workspaces
         "Mod+1".action.focus-workspace = "personal";
@@ -185,23 +190,6 @@
 
           default-column-width = {
             proportion = 0.50;
-          };
-        }
-
-        # ----------------------------------------------------------
-        # Browser
-        # ----------------------------------------------------------
-
-        {
-          matches = [
-            { app-id = "^zen$"; }
-            { app-id = "^firefox$"; }
-            { app-id = "^chromium$"; }
-            { app-id = "^google-chrome$"; }
-          ];
-
-          default-column-width = {
-            proportion = 0.66667;
           };
         }
 

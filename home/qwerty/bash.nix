@@ -275,7 +275,7 @@
         PS1+=$'\n'
         PS1+="''${__prompt_gray}└─''${__prompt_reset}"
         PS1+="''${status}"
-        PS1+=" ''${__prompt_bold}''${__prompt_white}\\$''${__prompt_reset} "
+        PS1+=" ''${__prompt_bold}''${__prompt_white}\\\$''${__prompt_reset} "
       }
 
 

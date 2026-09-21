@@ -6,6 +6,7 @@
     ./bash.nix
     ./niri.nix
     ./nixvim.nix
+    ./userDirs.nix
     ./ssh.nix
     ./zen.nix
   ];
