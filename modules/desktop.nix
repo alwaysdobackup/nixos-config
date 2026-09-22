@@ -1,4 +1,10 @@
-{ config, pkgs, lib, username, ... }:
+{
+  config,
+  pkgs,
+  lib,
+  username,
+  ...
+}:
 
 # Everything in this file is meant to be identical across every machine you
 # run this on. Anything that varies per-machine (hostname, disk, timezone,
@@ -46,6 +52,16 @@
   };
 
   ##########################################################################
+  # Environment variables
+  ##########################################################################
+
+  # Force wayland when possible
+  environment.sessionVariables = {
+    NIXOS_OZONE_WL = "1";
+    LIBVA_DRIVER_NAME = "nvidia";
+  };
+
+  ##########################################################################
   # Graphics: nvidia-open
   ##########################################################################
   hardware.graphics = {
@@ -56,9 +72,9 @@
   services.xserver.videoDrivers = [ "nvidia" ];
 
   hardware.nvidia = {
-    modesetting.enable = true;   # required for Wayland compositors like niri
-    open = true;                 # nvidia-open: only Turing (RTX 20xx) and newer
-    package = config.boot.kernelPackages.nvidiaPackages.latest;
+    open = true; # nvidia-open: only Turing (RTX 20xx) and newer
+    modesetting.enable = true; # required for Wayland compositors like niri
+    package = config.boot.kernelPackages.nvidiaPackages.stable;
     nvidiaSettings = true;
 
     powerManagement.enable = false; # flip to true on a laptop if suspend misbehaves
@@ -115,6 +131,9 @@
     git
   ];
 
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.settings.experimental-features = [
+    "nix-command"
+    "flakes"
+  ];
   nixpkgs.config.allowUnfree = true; # the nvidia driver is unfree
 }
